@@ -15,19 +15,349 @@
 
 ### 🗃️ Diagrama entidad - relación
 
+![diagrama](universidadDB.png)
+
+
 
 
 ### 🔨 Creación de tablas
 
+- [Script de creación de tablas](estructuraDB.sql)
 
+  
+
+### 🔧 Inserción de datos
+
+- [Script de la insercion de datos](inserts.sql)
 
 ### 👀 Vistas
 
 
 
-### 🔧 Inserción de datos
+1. Numero de profesores que tiene cada departamento.
+
+```sql
+CREATE VIEW teachers_per_department AS
+SELECT d.name, COUNT(t.id) FROM teacher AS t
+RIGHT JOIN department AS d ON d.id = t.department_id
+GROUP BY d.name ORDER BY COUNT(t.id);
+```
 
 
+
+2. listado con el nombre de todos los grados existentes en la base de datos y el número de asignaturas que tiene cada uno.
+
+```sql
+CREATE VIEW subjects_per_grade AS
+SELECT gr.name, COUNT(s.id) FROM grade AS gr 
+LEFT JOIN subject AS s ON s.grade_id = gr.id
+GROUP BY gr.name 
+ORDER BY COUNT(s.id) DESC;
+```
+
+
+
+3. nombre de los grados y la suma del número total de créditos que hay para cada tipo de asignatura
+
+```sql
+CREATE VIEW count_subject_type AS
+SELECT gr.name, su.type, SUM(su.credits) FROM subject AS su
+INNER JOIN grade AS gr ON gr.id = su.grade_id
+GROUP BY su.type, gr.name
+ORDER BY su.type DESC;
+```
+
+
+
+4. listado que muestre cuántos alumnos se han matriculado de alguna asignatura en cada uno de los cursos escolares
+
+```sql
+CREATE OR REPLACE VIEW active_students_by_course AS
+SELECT DISTINCT ay.id, COUNT(se.student_id) FROM student_enrollment AS se
+INNER JOIN academic_year AS ay ON ay.id = se.academic_year_id;
+GROUP BY ay.id;
+```
+
+
+
+5. listado con el número de asignaturas que imparte cada profesor
+
+   ```sql
+     CREATE VIEW subjects_per_teacher AS 
+     SELECT p.id, p.name, p.last_name, p.last_surname, COUNT(DISTINCT su.id) FROM person AS p
+     INNER JOIN teacher AS t ON t.id = p.id 
+     LEFT JOIN subject AS su ON su.teacher_id = t.id
+     GROUP BY p.id, p.name, p.last_name, p.last_surname
+     ORDER BY COUNT(su.id) DESC;
+   ```
+
+
+
+6. listado con las asignaturas que no tienen un profesor asignado
+
+   ```sql
+      CREATE VIEW subjects_without_teacher AS
+      SELECT su.name FROM subject AS su
+      LEFT JOIN teacher AS t ON t.id = su.teacher_id
+      WHERE su.teacher_id IS NULL;
+   ```
+
+   
+
+7. listado con los profesores que no están asociados a un departamento.
+
+   ```sql
+   CREATE OR REPLACE VIEW teachers_without_department AS 
+     SELECT d.name AS department_name, p.name, p.last_name, p.last_surname FROM person AS p
+     RIGHT JOIN teacher AS t ON t.id = p.id
+     LEFT JOIN department AS d ON d.id = t.department_id 
+     WHERE t.department_id IS NULL;
+   ```
+
+   
+
+8. departamentos que no tienen profesores asociados
+
+   ```sql
+     CREATE VIEW departments_without_teachers AS
+     SELECT d.name FROM department AS d
+     LEFT JOIN teacher AS t ON d.id = t.department_id
+     WHERE t.id IS NULL;
+   ```
+
+   
+
+9.  listado con los nombres de todos los profesores y los departamentos que tienen vinculados
+
+   ```sql
+     CREATE OR REPLACE VIEW teachers_and_departments AS
+     SELECT d.name AS department_name, p.name, p.last_name, p.last_surname FROM person AS p
+     RIGHT JOIN teacher AS t ON t.id = p.id
+     LEFT JOIN department AS d ON d.id = t.department_id 
+     ORDER BY p.last_name ASC, p.last_surname ASC , p.name ASC;
+   ```
+
+
+
+10. listado con todas las asignaturas ofertadas en el Grado en Ingeniería Informática (Plan 2015)
+
+    ```sql
+      CREATE VIEW subjects_from_ie AS
+      SELECT su.name FROM subject AS su
+      INNER JOIN grade AS gr ON gr.id = su.grade_id
+      WHERE gr.name LIKE '%Ingeniería Informática (Plan 2015)';
+    ```
+
+    
+
+
+
+### ⚙️ Procedimientos almacenados
+
+
+
+1. Eliminar un curso
+
+   ```sql
+   DELIMITER //
+   DROP PROCEDURE IF EXISTS delete_course//
+   CREATE PROCEDURE delete_course(
+   	IN idP INT
+   )
+   BEGIN
+   	DELETE FROM subject WHERE idP = academic_year_id;
+   	DELETE FROM academic_year WHERE idP = id;
+   END//
+   DELIMITER ;
+   
+   CALL delete_course(3);
+   ```
+
+   
+
+2. Insercion de datos en materias
+
+   ```sql
+   DELIMITER $$
+   DROP PROCEDURE IF EXISTS insert_into_subjects$$
+   CREATE PROCEDURE insert_into_subjects(
+       IN id INT  ,
+       IN nombre VARCHAR(100)  ,
+       IN creditos FLOAT UNSIGNED  ,
+       IN tipo VARCHAR(20),
+       IN curso TINYINT   ,
+       IN cuatrimestre TINYINT   ,
+       IN id_profesor INT ,
+       IN id_grado INT  
+   )
+   BEGIN
+   
+   	DECLARE subject_type VARCHAR(20);
+   	
+   	IF tipo = 'básica' THEN
+   		SET subject_type = 'Basic';
+   	ELSEIF tipo = 'obligatoria' THEN
+   		SET subject_type = 'Mandatory';
+   	ELSE
+   		SET subject_type = 'Optional';
+   	END IF;
+   	
+   	INSERT INTO subject VALUES(id, nombre, creditos, subject_type, curso, cuatrimestre, id_profesor, id_grado);
+   END$$
+   DELIMITER ;
+   
+   CALL insert_into_subjects(1, 'Álgegra lineal y matemática discreta', 6, 'básica', 1, 1, 3, 4); -- se deben haber agregado profesores y cursos para que el procedimiento funcione
+   ```
+
+   
+
+3. Cambiar el nombre de una persona
+
+   ```sql
+   DELIMITER $$
+   DROP PROCEDURE IF EXISTS change_name$$
+   CREATE PROCEDURE change_name(
+       IN id_person INT,
+   	IN new_name VARCHAR(25),
+       IN new_last_name VARCHAR(50),
+       IN new_last_surname VARCHAR(50)
+   )
+   BEGIN
+   	UPDATE person
+   	SET name = new_name, last_name = new_last_name, last_surname = new_last_surname
+   	WHERE id = id_person;
+   END$$
+   DELIMITER ;
+   
+   CALL cahange_name(1, 'Juan', 'Rodriguez', 'Perez')
+   ```
+
+   
+
+4. Buscar persona por año de nacimiento
+
+   ```sql
+   DELIMITER $$
+   DROP PROCEDURE IF EXISTS search_person_by_birthday$$
+   CREATE PROCEDURE search_person_by_birthday(
+   	IN year_parameter INT
+   )
+   BEGIN
+       SELECT name, last_name, last_surname FROM person
+       WHERE  YEAR(birthday) = year_parameter;
+   END$$
+   DELIMITER ;
+   CALL search_person_by_birthday(1999);
+   ```
+
+
+
+5. Buscar alumnos matriculados en cierta carrera
+
+   ```SQL
+   DELIMITER //
+   DROP PROCEDURE IF EXISTS search_alumnos_by_carreer//
+   CREATE PROCEDURE search_alumnos_by_carreer(in carreer_name VARCHAR(150))
+   BEGIN
+       SELECT DISTINCT p.id, p.nif, p.name, p.last_name, p.last_surname, g.name FROM person AS p
+       INNER JOIN student_enrollment AS s ON s.student_id = p.id
+       INNER JOIN subject AS su ON su.id = s.subject_id 
+       INNER JOIN grade AS g ON g.id = su.grade_id
+       WHERE g.name = carreer_name;
+   END//
+   DELIMITER ;
+   ```
+
+   
+
+6. Lista de asignaturas ofertadas en cierta carrera.
+
+   ```sql
+   DELIMITER //
+   DROP PROCEDURE IF EXISTS subjects_by_grade//
+   CREATE PROCEDURE subjects_by_grade(IN carreer_name VARCHAR(150))
+   BEGIN
+   	SELECT su.name FROM subject AS su
+       INNER JOIN grade AS gr ON gr.id = su.grade_id
+       WHERE gr.name = carreer_name;
+   
+   END //
+   DELIMITER ;
+   ```
+
+
+
+7.  Listado de los profesores junto con el nombre de un departamento al que están vinculados
+
+   ```sql
+   DELIMITER //
+   DROP PROCEDURE IF EXISTS teachers_by_department//
+   CREATE PROCEDURE teachers_by_department(IN dep_name VARCHAR(70))
+   BEGIN
+       SELECT p.name, p.last_name, p.last_surname, d.name FROM person AS p
+       INNER JOIN teacher AS t ON t.id = p.id
+       INNER JOIN department AS d ON d.id = t.department_id
+       WHERE d.name = dep_name
+       ORDER BY p.last_name ASC, p.last_surname ASC , p.name ASC;
+   END //
+   DELIMITER ;
+   ```
+
+   
+
+8.  listado con el nombre de las asignaturas, año de inicio y año de fin del curso escolar del alumno con un determinado nif
+
+   ```sql
+   DELIMITER //
+   DROP PROCEDURE IF EXISTS search_info_student//
+   CREATE PROCEDURE search_info_student(IN nif_student VARCHAR(70))
+   BEGIN
+       SELECT su.name, ay.start_year, ay.finish_year FROM person AS p
+       INNER JOIN student_enrollment AS se ON se.student_id = p.id 
+       INNER JOIN subject AS su ON su.id = se.subject_id
+       INNER JOIN academic_year AS ay ON ay.id = se.academic_year_id
+       WHERE p.nif = nif_student;
+   END //
+   DELIMITER ;
+   ```
+
+   
+
+9. Asignar un profesor a una asignatura
+
+   ```sql
+   DELIMITER //
+   DROP PROCEDURE IF EXISTS asign_teacher_subject//
+   CREATE PROCEDURE asign_teacher_subject(IN id_teacher_arg INT, IN id_subject_arg INT)
+   BEGIN
+       UPDATE subject
+       SET teacher_id = id_teacher_arg
+       WHERE id = id_subject_arg;
+   END //
+   DELIMITER ;
+   ```
+
+   
+
+10. crear una nuevo departamento
+
+    ```sql
+    DELIMITER //
+    DROP PROCEDURE IF EXISTS create_subject//
+    CREATE PROCEDURE create_subject(IN department_name VARCHAR(70))
+    BEGIN
+    	DECLARE dE VARCHAR(70);
+    	SELECT name INTO dE FROM department WHERE name = department_name;
+    	IF dE IS NULL THEN
+    		INSERT INTO department(name) VALUES (department_name);
+    	ELSE
+    		SELECT 'El nombre del nuevo departamento debe ser único' AS message;
+    	END IF;
+    END //
+    DELIMITER ;
+    ```
+
+    
 
 ### 🔍 Consultas
 
@@ -555,7 +885,7 @@
    
 
 3. Calcula cuántos profesores hay en cada departamento. El resultado sólo debe mostrar dos columnas, una con el nombre del departamento y otra con el número de profesores que hay en ese departamento. El resultado sólo debe incluir los departamentos que tienen profesores asociados y
-  deberá estar ordenado de mayor a menor por el número de profesores.
+    deberá estar ordenado de mayor a menor por el número de profesores.
 
   ```sql
   SELECT d.name, COUNT(t.id) FROM teacher AS t
@@ -672,9 +1002,9 @@
 8. Devuelve un listado que muestre cuántos alumnos se han matriculado de alguna asignatura en cada uno de los cursos escolares. El resultado deberá mostrar dos columnas, una columna con el año de inicio del curso escolar y otra con el número de alumnos matriculados.
 
   ```sql
-  SELECT DISTINCT ay.start_year, COUNT(se.student_id) FROM student_enrollment AS se
+  SELECT DISTINCT ay.id, COUNT(se.student_id) FROM student_enrollment AS se
   INNER JOIN academic_year AS ay ON ay.id = se.academic_year_id
-  GROUP BY ay.start_year;
+  GROUP BY ay.id;
   
   +------------+----------------------+
   | start_year | COUNT(se.student_id) |

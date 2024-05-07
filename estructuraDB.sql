@@ -75,7 +75,7 @@ CREATE TABLE complement(
 CREATE TABLE address( 
 	id INT NOT NULL AUTO_INCREMENT,
 	person_id INT UNSIGNED NOT NULL,
-	zip VARCHAR(15) NOT NULL,
+	zip VARCHAR(15),
 	city_id INT NOT NULL,
 	CONSTRAINT pk_address PRIMARY KEY(id),
 	CONSTRAINT fk_address_city FOREIGN KEY(city_id) REFERENCES city(id),
@@ -180,7 +180,7 @@ CREATE TABLE academic_year (
 CREATE TABLE student_enrollment (
     student_id INT UNSIGNED NOT NULL,
     subject_id INT UNSIGNED NOT NULL,
-    academic_year_id INT  NOT NULL,
+    academic_year_id INT  UNSIGNED NOT NULL,
     PRIMARY KEY (student_id, subject_id, academic_year_id),
     FOREIGN KEY (student_id) REFERENCES person(id),
     FOREIGN KEY (subject_id) REFERENCES subject(id),

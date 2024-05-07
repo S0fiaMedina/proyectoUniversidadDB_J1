@@ -1,8 +1,8 @@
 
-INSERT INTO persona VALUES (1, '26902806M', 'Salvador', 'Sánchez', 'Pérez', 'Almería', 'C/ Real del barrio alto', '950254837', '1991/03/28', 'H', 'alumno');
 
 INSERT INTO country VALUES(1, 'España');
 INSERT INTO region VALUES(1,'Almería', 1 );
+INSERT INTO city VALUES(1, 'Almería',1);
 INSERT INTO complement_type(type_name) VALUES('Calle');
 INSERT INTO telephone_type(type_name) VALUES ('Fijo');
 
@@ -67,7 +67,6 @@ BEGIN
 	
 	INSERT INTO complement(complement_type_id, complement_description) VALUES(1, calle);
 	SET complement_l = LAST_INSERT_ID();
-	INSERT INTO city(city_name, region_id) VALUES(ciudad, 1);
 	INSERT INTO address(person_id, city_id) VALUES(person_l,1);
 	SET address_l = LAST_INSERT_ID();
 	INSERT INTO address_complement VALUES(complement_l,address_l );
@@ -75,7 +74,6 @@ BEGIN
     IF telefono IS NOT NULL THEN
         INSERT INTO telephone(person_id, phone_number, type_id) VALUES (person_l, telefono, 1);
     END IF;
-	
 END//
 DELIMITER ;
 
