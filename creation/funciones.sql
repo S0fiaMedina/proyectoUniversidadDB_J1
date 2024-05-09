@@ -1,0 +1,14 @@
+DELIMITER //
+DROP FUNCTION IF EXISTS recortar_calle//
+CREATE FUNCTION recortar_calle(cadena VARCHAR(255))
+RETURNS VARCHAR(255)
+DETERMINISTIC
+NO SQL
+BEGIN
+    IF LEFT(cadena, 3) = 'C/ ' THEN
+        RETURN SUBSTRING(cadena, 4);
+    ELSE
+        RETURN cadena;
+    END IF;
+END//
+DELIMITER ;

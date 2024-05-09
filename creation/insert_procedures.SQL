@@ -1,35 +1,8 @@
+-- -----------------------------------
+--  funcion para ingresar datos de la persona 
+-- -----------------------------------
 
-
-INSERT INTO country VALUES(1, 'España');
-INSERT INTO region VALUES(1,'Almería', 1 );
-INSERT INTO city VALUES(1, 'Almería',1);
-INSERT INTO complement_type(type_name) VALUES('Calle');
-INSERT INTO telephone_type(type_name) VALUES ('Fijo');
-
-
-
--------------------------------------
--- recortar la calle de la direccion
--------------------------------------
-
-
-DELIMITER //
-DROP FUNCTION IF EXISTS recortar_calle//
-CREATE FUNCTION recortar_calle(cadena VARCHAR(255))
-RETURNS VARCHAR(255)
-DETERMINISTIC
-NO SQL
-BEGIN
-    IF LEFT(cadena, 3) = 'C/ ' THEN
-        RETURN SUBSTRING(cadena, 4);
-    ELSE
-        RETURN cadena;
-    END IF;
-END//
-DELIMITER ;
-
-
-
+/* Toma como parametro los valores que estan en el insert original hacia persona, y los ingresa a las tablas derivadas de persona que están en esta base de datos*/
 
 DELIMITER //
 DROP PROCEDURE IF EXISTS INSERT_DATA_PERSON//
@@ -55,19 +28,19 @@ BEGIN
 	DECLARE person_l INT;
 	
 	
-	IF sexo = 'H' THEN
+	IF sexo = 'H' THEN -- traduce las opciones: 'Femenine', 'Masculine'
 		SET genre = 'M';
 	ELSE 
 		SET genre = 'F';
 	END IF;
 	
-	IF tipo = 'profesor' THEN
+	IF tipo = 'profesor' THEN -- traduce las opciones
 		SET rol = 'teacher';
 	ELSE 
 		SET rol = 'student ';
 	END IF;
 	
-	SET calle = recortar_calle(direccion);
+	SET calle = recortar_calle(direccion); -- obtiene el numero del complmento de la direccion(calle)
 	
 	
 	INSERT INTO person VALUES(id, nif,nombre, apellido1, apellido2, fecha_nacimiento, genre, rol);
@@ -87,12 +60,9 @@ END//
 DELIMITER ;
 
 
-
-
-
-
-
-
+-- -----------------------------------------------
+-- funcion para ingresar datos de las asignaturas
+-- ----------------------------------------------
 
 DELIMITER $$
 DROP PROCEDURE IF EXISTS DATA_SUBJECT$$

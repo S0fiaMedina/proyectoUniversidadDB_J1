@@ -1,1 +1,0 @@
-CALL INSERT_DATA_PERSON(1, '26902806M', 'Salvador', 'Sánchez', 'Pérez', 'Almería', 'C/ Real del barrio alto', '950254837', '1991/03/28', 'H', 'alumno');

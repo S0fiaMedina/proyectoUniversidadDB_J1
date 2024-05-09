@@ -4,10 +4,9 @@ DROP DATABASE IF EXISTS universidadDB;
 CREATE DATABASE universidadDB;
 USE universidadDB;
 
-/*
-*********** TABLAS DERIVADAS DE PERSONA***********
-*/
+--------------------
 -- PERSONA
+--------------------
 
 CREATE TABLE person (
     id INT UNSIGNED AUTO_INCREMENT,
@@ -22,18 +21,18 @@ CREATE TABLE person (
 )ENGINE = INNODB;
 
 
-/*
-*********** TABLAS DERIVADAS DE DIRECCION***********
-*/
-
+--------------------
 -- PAISES
+--------------------
 CREATE TABLE country(
 	id INT NOT NULL AUTO_INCREMENT,
 	country_name VARCHAR(50) NOT NULL UNIQUE,
 	CONSTRAINT pk_country PRIMARY KEY(id)
 )ENGINE = INNODB;
 
--- REGIONES
+--------------------
+-- REGION
+--------------------
 CREATE TABLE region(
 	id INT NOT NULL	 AUTO_INCREMENT,
 	region_name VARCHAR(50) NOT NULL,
@@ -42,7 +41,10 @@ CREATE TABLE region(
 	CONSTRAINT fk_region_country FOREIGN KEY(country_id) REFERENCES country(id)
 )ENGINE = INNODB;
 
+
+--------------------
 -- CIUDAD
+--------------------
 
 CREATE TABLE city(
 	id INT NOT NULL AUTO_INCREMENT,
@@ -52,7 +54,11 @@ CREATE TABLE city(
 	CONSTRAINT fk_city_region FOREIGN KEY(region_id) REFERENCES region(id)
 )ENGINE = INNODB;
 
---  TIPO DE COMPLEMENTO
+
+
+--------------------
+-- TIPO DE COMPLEMENTO
+--------------------
 
 CREATE TABLE complement_type(
 	id INT NOT NULL AUTO_INCREMENT,
@@ -60,7 +66,10 @@ CREATE TABLE complement_type(
 	CONSTRAINT pk_complement_type PRIMARY KEY(id)
 )ENGINE = INNODB;
 
+
+--------------------
 -- COMPLEMENTO
+--------------------
 
 CREATE TABLE complement(
 	id INT NOT NULL AUTO_INCREMENT,
@@ -70,7 +79,11 @@ CREATE TABLE complement(
 	CONSTRAINT FOREIGN KEY(complement_type_id) REFERENCES complement_type(id)
 )ENGINE = INNODB;
 
--- DIRECCION
+
+--------------------
+-- DIRECCION_COMPLMENTO: 
+-- tabla que soporta la relacion n:n entre direcciones y sus posibles complmentos 
+--------------------
 
 CREATE TABLE address( 
 	id INT NOT NULL AUTO_INCREMENT,
@@ -82,7 +95,11 @@ CREATE TABLE address(
 	CONSTRAINT fk_address_person FOREIGN KEY(person_id) REFERENCES person(id)
 )ENGINE = INNODB;
 
--- DIRECCION COMPLEMENTO
+
+--------------------
+-- DIRECCION_COMPLMENTO: 
+-- tabla que soporta la relacion n:n entre direcciones y sus posibles complmentos 
+--------------------
 
 CREATE TABLE address_complement(
     complement_id INT NOT NULL,
@@ -93,20 +110,19 @@ CREATE TABLE address_complement(
 )ENGINE = INNODB;
 
 
-/*
-******************* TABLAS DERIVADAS DE TELEFONO *******************
-*/
-
+--------------------
 -- TIPO DE TELEFONO
+--------------------
+
 CREATE TABLE telephone_type(
 	id INT NOT NULL AUTO_INCREMENT,
 	type_name VARCHAR(15) NOT NULL,
 	CONSTRAINT pk_telephone_type PRIMARY KEY(id)
 )ENGINE = INNODB;
 
-/*
+--------------------
 -- TELEFONO
-*/
+--------------------
 CREATE TABLE telephone(
 	id INT NOT NULL AUTO_INCREMENT,
 	person_id INT UNSIGNED NOT NULL,
@@ -117,23 +133,18 @@ CREATE TABLE telephone(
 	CONSTRAINT fk_telephone_type FOREIGN KEY(type_id) REFERENCES telephone_type(id)
 )ENGINE = INNODB;
 
-
-
-
-
-
-
-/*
-*********** TABLAS DERIVADAS DE PROFESOR***********
-*/
-
+--------------------
 -- DEPARTAMENTO
+--------------------
+
 CREATE TABLE department (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL
 );
 
+--------------------
 -- PROFESOR
+--------------------
 
 CREATE TABLE teacher (
     id INT UNSIGNED NOT NULL,
@@ -152,9 +163,9 @@ CREATE TABLE grade (
 )ENGINE = INNODB;
 
 
-
-
--- materia
+--------------------
+-- ASIGNATURA
+--------------------
 
 CREATE TABLE subject (
     id INT UNSIGNED AUTO_INCREMENT,
@@ -170,13 +181,19 @@ CREATE TABLE subject (
     CONSTRAINT fk_subject_grade FOREIGN KEY(grade_id) REFERENCES grade(id)
 )ENGINE = INNODB;
 
+--------------------
+-- CURSO ESCOLAR
+--------------------
+
 CREATE TABLE academic_year (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     start_date YEAR NOT NULL,
     finish_date YEAR NOT NULL
 );
 
--- estudiante
+--------------------
+-- ESTUDIANTE_SE_MATRICULA
+--------------------
 CREATE TABLE student_enrollment (
     student_id INT UNSIGNED NOT NULL,
     subject_id INT UNSIGNED NOT NULL,

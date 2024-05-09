@@ -2,45 +2,104 @@
 
 
 
-### 👤Autoría
-
-
-
-- **Nombre:** Sofia Marcela Medina Díaz.
-- **Grupo:** J1
-
 
 
 ## :school:  Base de datos de universidad :school: 
 
+Esta es una base de datos relacional hecha en SQL y gestionada por el sistema de MySQL , la cual consta de una version normalizada de una base de datos de una universidad la cual posee informacion sobre carreras, cursos, estudiantes, profesores y sus departamentos. 
+
+Este repositorio se presenta como la segunda parte del proyecto de base de datos.
+
+- **Base de datos original**: [universidad tipo A](https://gist.github.com/josejuansanchez/7501a91223ef2064167a15908ad5991b) 
+
+
+
+
+
+### 👤Autoría
+
+****
+
+- **Nombre:** Sofia Marcela Medina Díaz.
+
+- **Grupo:** J1
+
+  
+
+
+
+
+
+
+
 ### 🗃️ Diagrama entidad - relación
+
+*****
+
+
 
 ![diagrama](universidadDB.png)
 
 
 
 
+
+
+
 ### 🔨 Creación de tablas
 
-- [Script de creación de tablas](estructuraDB.sql)
+***
+
+El script contenido en el archivo "universidad_tables" incluye las  tablas normalizadas de la base de datos, junto con las restricciones de  clave primaria y clave externa (foránea).
+
+- [Script de creación de tablas](creation/universidad_tables.sql)
+
+
+
+
+
+### 🔧 Inserción de datos + implementacion
+
+*****
+
+- La insercion de archivos se hace entre comandos insert y llamadas a [procedimientos](creation/insert_procedures.SQL) apoyadas por una [funcion](creation/funciones.sql), las cuales deben crearse primero.
+
+- Para poder hacer uso de la base de datos, se hacen estos inserts iniciales:
+
+  ```sql
+  INSERT INTO country VALUES(1, 'España');
+  INSERT INTO region VALUES(1,'Almería', 1 );
+  INSERT INTO city VALUES(1, 'Almería',1);
+  INSERT INTO complement_type(type_name) VALUES('Calle');
+  INSERT INTO telephone_type(type_name) VALUES ('Fijo');
+  ```
 
   
 
-### 🔧 Inserción de datos
+- Luego se ejecutan los siguientes inserts y llamadas a procedimientos que estan en la carpeta de `inserts` (con el fin de respetar las llaves foraneas):
+  - `department.sql -> person.sql -> teacher.sql -> grade.sql -> academic_year.sql -> subject.sql -> student_enrollment.sql  `
 
-- [Script de la insercion de datos](inserts.sql)
+
+
+
 
 ### 👀 Vistas
+
+****
 
 
 
 1. Numero de profesores que tiene cada departamento.
 
 ```sql
-CREATE VIEW teachers_per_department AS
-SELECT d.name, COUNT(t.id) FROM teacher AS t
+CREATE OR REPLACE VIEW teachers_per_department AS
+SELECT d.name AS 'nombre del departamento', 
+COUNT(t.id) AS 'numero de profesores'
+FROM teacher AS t
 RIGHT JOIN department AS d ON d.id = t.department_id
 GROUP BY d.name ORDER BY COUNT(t.id);
+
+SELECT teachers_per_department;
 ```
 
 
@@ -48,8 +107,10 @@ GROUP BY d.name ORDER BY COUNT(t.id);
 2. listado con el nombre de todos los grados existentes en la base de datos y el número de asignaturas que tiene cada uno.
 
 ```sql
-CREATE VIEW subjects_per_grade AS
-SELECT gr.name, COUNT(s.id) FROM grade AS gr 
+CREATE OR REPLACE VIEW subjects_per_grade AS
+SELECT gr.name AS 'nombre del grado', 
+COUNT(s.id) AS 'numero de materias'
+FROM grade AS gr 
 LEFT JOIN subject AS s ON s.grade_id = gr.id
 GROUP BY gr.name 
 ORDER BY COUNT(s.id) DESC;
@@ -60,8 +121,11 @@ ORDER BY COUNT(s.id) DESC;
 3. nombre de los grados y la suma del número total de créditos que hay para cada tipo de asignatura
 
 ```sql
-CREATE VIEW count_subject_type AS
-SELECT gr.name, su.type, SUM(su.credits) FROM subject AS su
+CREATE OR REPLACE VIEW count_subject_type AS
+SELECT gr.name AS 'nombre del grado', 
+su.type AS 'Tipo de asignatura', 
+SUM(su.credits) AS 'Total de creditos'
+FROM subject AS su
 INNER JOIN grade AS gr ON gr.id = su.grade_id
 GROUP BY su.type, gr.name
 ORDER BY su.type DESC;
@@ -73,8 +137,10 @@ ORDER BY su.type DESC;
 
 ```sql
 CREATE OR REPLACE VIEW active_students_by_course AS
-SELECT DISTINCT ay.id, COUNT(se.student_id) FROM student_enrollment AS se
-INNER JOIN academic_year AS ay ON ay.id = se.academic_year_id;
+SELECT  ay.id AS 'Id del curso', 
+COUNT(se.student_id) AS 'Cantidad de estudiantes'
+FROM student_enrollment AS se
+INNER JOIN academic_year AS ay ON ay.id = se.academic_year_id
 GROUP BY ay.id;
 ```
 
@@ -83,12 +149,14 @@ GROUP BY ay.id;
 5. listado con el número de asignaturas que imparte cada profesor
 
    ```sql
-     CREATE VIEW subjects_per_teacher AS 
-     SELECT p.id, p.name, p.last_name, p.last_surname, COUNT(DISTINCT su.id) FROM person AS p
-     INNER JOIN teacher AS t ON t.id = p.id 
-     LEFT JOIN subject AS su ON su.teacher_id = t.id
-     GROUP BY p.id, p.name, p.last_name, p.last_surname
-     ORDER BY COUNT(su.id) DESC;
+   CREATE OR REPLACE VIEW subjects_per_teacher AS 
+   SELECT CONCAT_WS(' ', p.name, p.last_name, p.last_surname) AS 'Nombre del profesor',
+   COUNT(DISTINCT su.id) AS 'Numero de asignaturas' 
+   FROM person AS p
+   INNER JOIN teacher AS t ON t.id = p.id 
+   LEFT JOIN subject AS su ON su.teacher_id = t.id
+   GROUP BY CONCAT_WS(' ', p.name, p.last_name, p.last_surname)
+   ORDER BY COUNT(su.id) DESC;
    ```
 
 
@@ -96,10 +164,11 @@ GROUP BY ay.id;
 6. listado con las asignaturas que no tienen un profesor asignado
 
    ```sql
-      CREATE VIEW subjects_without_teacher AS
-      SELECT su.name FROM subject AS su
-      LEFT JOIN teacher AS t ON t.id = su.teacher_id
-      WHERE su.teacher_id IS NULL;
+   CREATE OR REPLACE VIEW subjects_without_teacher AS
+   SELECT su.name AS 'Nombre de la asignatura'
+   FROM subject AS su
+   LEFT JOIN teacher AS t ON t.id = su.teacher_id
+   WHERE su.teacher_id IS NULL;
    ```
 
    
@@ -108,10 +177,12 @@ GROUP BY ay.id;
 
    ```sql
    CREATE OR REPLACE VIEW teachers_without_department AS 
-     SELECT d.name AS department_name, p.name, p.last_name, p.last_surname FROM person AS p
-     RIGHT JOIN teacher AS t ON t.id = p.id
-     LEFT JOIN department AS d ON d.id = t.department_id 
-     WHERE t.department_id IS NULL;
+   SELECT d.name AS 'nombre del departamento', 
+   CONCAT_WS(' ', p.name, p.last_name, p.last_surname) AS 'Nombre del profesor' 
+   FROM person AS p
+   RIGHT JOIN teacher AS t ON t.id = p.id
+   LEFT JOIN department AS d ON d.id = t.department_id 
+   WHERE t.department_id IS NULL;
    ```
 
    
@@ -119,10 +190,12 @@ GROUP BY ay.id;
 8. departamentos que no tienen profesores asociados
 
    ```sql
-     CREATE VIEW departments_without_teachers AS
-     SELECT d.name FROM department AS d
-     LEFT JOIN teacher AS t ON d.id = t.department_id
-     WHERE t.id IS NULL;
+   CREATE OR REPLACE VIEW departments_without_teachers AS
+   SELECT d.name AS 'nombre del departamento' 
+   FROM department AS d
+   LEFT JOIN teacher AS t ON d.id = t.department_id
+   WHERE t.id IS NULL;
+   
    ```
 
    
@@ -131,7 +204,9 @@ GROUP BY ay.id;
 
    ```sql
      CREATE OR REPLACE VIEW teachers_and_departments AS
-     SELECT d.name AS department_name, p.name, p.last_name, p.last_surname FROM person AS p
+     SELECT d.name AS 'nombre del departamento',
+     CONCAT_WS(' ', p.name, p.last_name, p.last_surname) AS 'Nombre del profesor' 
+     FROM person AS p
      RIGHT JOIN teacher AS t ON t.id = p.id
      LEFT JOIN department AS d ON d.id = t.department_id 
      ORDER BY p.last_name ASC, p.last_surname ASC , p.name ASC;
@@ -142,17 +217,21 @@ GROUP BY ay.id;
 10. listado con todas las asignaturas ofertadas en el Grado en Ingeniería Informática (Plan 2015)
 
     ```sql
-      CREATE VIEW subjects_from_ie AS
-      SELECT su.name FROM subject AS su
-      INNER JOIN grade AS gr ON gr.id = su.grade_id
-      WHERE gr.name LIKE '%Ingeniería Informática (Plan 2015)';
+    CREATE OR REPLACE VIEW subjects_from_ie AS
+    SELECT su.name AS 'nombre de la asignatura' FROM subject AS su
+    INNER JOIN grade AS gr ON gr.id = su.grade_id
+    WHERE gr.name LIKE '%Ingeniería Informática (Plan 2015)';
     ```
 
     
 
 
 
+
+
 ### ⚙️ Procedimientos almacenados
+
+*****
 
 
 
@@ -266,6 +345,8 @@ GROUP BY ay.id;
        WHERE g.name = carreer_name;
    END//
    DELIMITER ;
+   
+   CALL search_alumnos_by_carreer('Grado en Ingeniería Informática (Plan 2015)');
    ```
 
    
@@ -283,11 +364,13 @@ GROUP BY ay.id;
    
    END //
    DELIMITER ;
+   
+   CALL subjects_by_grade('Grado en Ingeniería Informática (Plan 2015)');
    ```
 
 
 
-7.  Listado de los profesores junto con el nombre de un departamento al que están vinculados
+7. Listado de los profesores junto con el nombre de un departamento al que están vinculados
 
    ```sql
    DELIMITER //
@@ -297,28 +380,32 @@ GROUP BY ay.id;
        SELECT p.name, p.last_name, p.last_surname, d.name FROM person AS p
        INNER JOIN teacher AS t ON t.id = p.id
        INNER JOIN department AS d ON d.id = t.department_id
-       WHERE d.name = dep_name
+       WHERE d.name LIKE dep_name
        ORDER BY p.last_name ASC, p.last_surname ASC , p.name ASC;
    END //
    DELIMITER ;
+   
+   CALL teachers_by_department('Informática');
    ```
 
    
 
-8.  listado con el nombre de las asignaturas, año de inicio y año de fin del curso escolar del alumno con un determinado nif
+8. listado con el nombre de las asignaturas, año de inicio y año de fin del curso escolar del alumno con un determinado nif
 
    ```sql
    DELIMITER //
    DROP PROCEDURE IF EXISTS search_info_student//
    CREATE PROCEDURE search_info_student(IN nif_student VARCHAR(70))
    BEGIN
-       SELECT su.name, ay.start_year, ay.finish_year FROM person AS p
+       SELECT su.name, ay.start_date, ay.finish_date FROM person AS p
        INNER JOIN student_enrollment AS se ON se.student_id = p.id 
        INNER JOIN subject AS su ON su.id = se.subject_id
        INNER JOIN academic_year AS ay ON ay.id = se.academic_year_id
        WHERE p.nif = nif_student;
    END //
    DELIMITER ;
+   
+   CALL search_info_student('26902806M');
    ```
 
    
@@ -335,6 +422,8 @@ GROUP BY ay.id;
        WHERE id = id_subject_arg;
    END //
    DELIMITER ;
+   
+   CALL asign_teacher_subject(3, 24);
    ```
 
    
@@ -343,11 +432,11 @@ GROUP BY ay.id;
 
     ```sql
     DELIMITER //
-    DROP PROCEDURE IF EXISTS create_subject//
-    CREATE PROCEDURE create_subject(IN department_name VARCHAR(70))
+    DROP PROCEDURE IF EXISTS create_department//
+    CREATE PROCEDURE create_department(IN department_name VARCHAR(70))
     BEGIN
     	DECLARE dE VARCHAR(70);
-    	SELECT name INTO dE FROM department WHERE name = department_name;
+    	SELECT name INTO dE FROM department WHERE name like department_name;
     	IF dE IS NULL THEN
     		INSERT INTO department(name) VALUES (department_name);
     	ELSE
@@ -355,8 +444,10 @@ GROUP BY ay.id;
     	END IF;
     END //
     DELIMITER ;
+    
+    CALL create_department('Artes');
     ```
-
+    
     
 
 ### 🔍 Consultas
@@ -595,14 +686,14 @@ GROUP BY ay.id;
 4. Devuelve un listado con el nombre de las asignaturas, año de inicio y año de fin del curso escolar del alumno con nif 26902806M.
 
   ```sql
-  SELECT su.name, ay.start_year, ay.finish_year FROM person AS p
+  SELECT su.name, ay.start_date, ay.finish_date FROM person AS p
   INNER JOIN student_enrollment AS se ON se.student_id = p.id 
   INNER JOIN subject AS su ON su.id = se.subject_id
   INNER JOIN academic_year AS ay ON ay.id = se.academic_year_id
   WHERE p.nif = '26902806M';
   
   +-----------+----------+----------------------------------------+------------+-------------+
-  | nif       | name     | name                                   | start_year | finish_year |
+  | nif       | name     | name                                   | start_date | finish_date |
   +-----------+----------+----------------------------------------+------------+-------------+
   | 26902806M | Salvador | Álgegra lineal y matemática discreta   |       2014 |        2015 |
   | 26902806M | Salvador | Cálculo                                |       2014 |        2015 |
@@ -639,7 +730,7 @@ GROUP BY ay.id;
   INNER JOIN student_enrollment AS se ON se.student_id = p.id
   INNER JOIN academic_year AS ay ON ay.id = se.academic_year_id
   INNER JOIN subject AS su ON su.id = se.subject_id
-  WHERE ay.start_year = 2018 AND ay.finish_year = 2019;
+  WHERE ay.start_date = 2018 AND ay.finish_date = 2019;
   
   +-------+------------+--------------+
   | name  | last_name  | last_surname |
@@ -1007,7 +1098,7 @@ GROUP BY ay.id;
   GROUP BY ay.id;
   
   +------------+----------------------+
-  | start_year | COUNT(se.student_id) |
+  | start_date | COUNT(se.student_id) |
   +------------+----------------------+
   |       2014 |                    9 |
   |       2018 |                   30 |
@@ -1111,10 +1202,24 @@ GROUP BY ay.id;
   INNER JOIN teacher AS t ON t.id = p.id
   INNER JOIN department AS de ON de.id = t.department_id
   WHERE t.id NOT IN (
-      SELECT teacher_id FROM subject
+      SELECT teacher_id FROM subject WHERE teacher_id IS NOT NULL
   );
   
-  Empty set (0,00 sec)
+  +----+-----------+------------+--------------+
+  | id | name      | last_name  | last_surname |
+  +----+-----------+------------+--------------+
+  |  5 | David     | Schmidt    | Fisher       |
+  | 15 | Alejandro | Kohler     | Schoen       |
+  |  8 | Cristina  | Lemke      | Rutherford   |
+  | 16 | Antonio   | Fahey      | Considine    |
+  | 10 | Esther    | Spencer    | Lakin        |
+  | 12 | Carmen    | Streich    | Hirthe       |
+  | 17 | Guillermo | Ruecker    | Upton        |
+  | 18 | Micaela   | Monahan    | Murray       |
+  | 13 | Alfredo   | Stiedemann | Morissette   |
+  | 20 | Francesca | Schowalter | Muller       |
+  +----+-----------+------------+--------------+
+  
   
   ```
 
