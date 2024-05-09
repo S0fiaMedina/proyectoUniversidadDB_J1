@@ -6,7 +6,13 @@ INSERT INTO city VALUES(1, 'Almería',1);
 INSERT INTO complement_type(type_name) VALUES('Calle');
 INSERT INTO telephone_type(type_name) VALUES ('Fijo');
 
+
+
+-------------------------------------
 -- recortar la calle de la direccion
+-------------------------------------
+
+
 DELIMITER //
 DROP FUNCTION IF EXISTS recortar_calle//
 CREATE FUNCTION recortar_calle(cadena VARCHAR(255))
@@ -21,6 +27,9 @@ BEGIN
     END IF;
 END//
 DELIMITER ;
+
+
+
 
 DELIMITER //
 DROP PROCEDURE IF EXISTS INSERT_DATA_PERSON//
@@ -112,55 +121,3 @@ BEGIN
 	INSERT INTO subject VALUES(id, nombre, creditos, subject_type, curso, cuatrimestre, id_profesor, id_grado);
 END$$
 DELIMITER ;
-
-
-
-
-
-
-
-
-/*
-
-import mysql.connector
-
-def ejecutar_procedimiento():
-    # Conexión a la base de datos
-    conn = mysql.connector.connect(
-        host="tu_host",
-        user="tu_usuario",
-        password="tu_contraseña",
-        database="tu_base_de_datos"
-    )
-    
-    # Crear un cursor
-    cursor = conn.cursor()
-    
-    try:
-        # Ejecutar el procedimiento almacenado
-        cursor.callproc('nombre_del_procedimiento', (parametro1, parametro2, ...))
-        
-        # Hacer commit de los cambios
-        conn.commit()
-        
-        # Obtener los comandos DDL
-        cursor.execute("SELECT event_definition FROM information_schema.events WHERE event_time > NOW() - INTERVAL 1 MINUTE")
-        ddl_commands = cursor.fetchall()
-        
-        # Imprimir los comandos DDL
-        for ddl_command in ddl_commands:
-            print(ddl_command[0])
-            
-    except mysql.connector.Error as err:
-        print("Error al ejecutar el procedimiento almacenado:", err)
-    finally:
-        # Cerrar el cursor y la conexión
-        cursor.close()
-        conn.close()
-
-# Llamar a la función para ejecutar el procedimiento almacenado
-ejecutar_procedimiento()
-
-
-*/
-
